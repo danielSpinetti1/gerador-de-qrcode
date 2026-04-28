@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de QR Code</title>
+    <meta name="description" content="Gere seus próprios QR Codes gratuitamente com esta ferramenta simples e moderna.">
+    <!-- Favicon (Ícone da aba) -->
+    <link rel="icon" type="image/png" href="favicon.png">
+
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="background-animation"></div>
+    <div class="container">
+        <div class="glass-card">
+            <h1>Gerador de QR Code</h1>
+            <p>Insira um texto ou URL para gerar seu QR Code</p>
+
+            <div class="input-group">
+                <input type="text" id="qr-input" placeholder="Ex: https://seusite.com ou um texto qualquer"
+                    autocomplete="off">
+            </div>
+
+            <button id="generate-btn" class="primary-btn">Gerar QR Code</button>
+
+            <div class="qr-result-container" id="qr-result-container">
+                <div id="qrcode"></div>
+                <button id="download-btn" class="secondary-btn" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Baixar QR Code
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- QRCode.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
