@@ -164,6 +164,16 @@ input::placeholder {
 #qrcode img {
     display: block;
     margin: 0 auto;
+    -webkit-touch-callout: default;
+    user-select: auto;
+}
+
+.qr-hint {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-top: -6px;
+    margin-bottom: 2px;
 }
 
 .secondary-btn {

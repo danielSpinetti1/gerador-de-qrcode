@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const qrCodeContainer = document.getElementById('qrcode');
     const qrResultContainer = document.getElementById('qr-result-container');
     const downloadBtn = document.getElementById('download-btn');
+    const qrHint = document.getElementById('qr-hint');
     
     let qrCode = null;
 
@@ -51,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Mostrar container com animação
             qrResultContainer.classList.add('show');
             downloadBtn.style.display = 'flex';
+            if (qrHint) qrHint.style.display = 'block';
             
             // Restaurar botão
             generateBtn.innerText = originalText;
@@ -58,30 +60,100 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300); // Pequeno delay para efeito visual
     }
 
-    downloadBtn.addEventListener('click', () => {
-        const img = qrCodeContainer.querySelector('img');
-        if (!img) return;
+    downloadBtn.addEventListener('click', async () => {
+        try {
+            const blob = await getQrBlob();
+            if (!blob) {
+                alert('Não foi possível obter a imagem do QR Code.');
+                return;
+            }
 
-        // Se a imagem usar base64 (como o qrcode.js geralmente faz)
-        const imgSrc = img.getAttribute('src');
-        if (imgSrc) {
-            triggerDownload(imgSrc);
-        } else {
-            // Fallback para canvas se src da imagem não estiver disponível logo
+            const fileName = 'qrcode.png';
+            const file = new File([blob], fileName, { type: 'image/png' });
+
+            // 1. Tentar Web Share API (Ideal para celular iOS/Android)
+            // Permite salvar direto na galeria de fotos ou compartilhar em apps
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'QR Code',
+                        text: 'QR Code gerado'
+                    });
+                    return;
+                } catch (shareErr) {
+                    if (shareErr.name === 'AbortError') {
+                        return; // Usuário cancelou a folha de compartilhamento
+                    }
+                    console.warn('Web Share falhou, tentando download direto:', shareErr);
+                }
+            }
+
+            // 2. Download via Blob URL (PC/Notebook e navegadores mobile com suporte)
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            setTimeout(() => {
+                URL.revokeObjectURL(blobUrl);
+            }, 1000);
+        } catch (error) {
+            console.error('Erro ao baixar QR Code:', error);
+            // Fallback de emergência: abrir a imagem em uma nova aba
+            const img = qrCodeContainer.querySelector('img');
             const canvas = qrCodeContainer.querySelector('canvas');
-            if (canvas) {
-                triggerDownload(canvas.toDataURL("image/png"));
+            const fallbackSrc = (img && img.src) || (canvas && canvas.toDataURL('image/png'));
+            if (fallbackSrc) {
+                window.open(fallbackSrc, '_blank');
             }
         }
     });
 
-    function triggerDownload(url) {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'qrcode.png';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+    async function getQrBlob() {
+        // Tentar pegar do <img> se já tiver data URL
+        const img = qrCodeContainer.querySelector('img');
+        if (img && img.src && img.src.startsWith('data:')) {
+            return dataURLtoBlob(img.src);
+        }
+
+        // Tentar pegar do <canvas>
+        const canvas = qrCodeContainer.querySelector('canvas');
+        if (canvas && canvas.toDataURL) {
+            try {
+                return dataURLtoBlob(canvas.toDataURL('image/png'));
+            } catch (e) {
+                console.warn('Erro ao obter imagem do canvas:', e);
+            }
+        }
+
+        // Se img.src for URL externa ou Blob
+        if (img && img.src) {
+            try {
+                const response = await fetch(img.src);
+                return await response.blob();
+            } catch (e) {
+                console.warn('Erro ao buscar src da imagem:', e);
+            }
+        }
+
+        return null;
+    }
+
+    function dataURLtoBlob(dataUrl) {
+        const arr = dataUrl.split(',');
+        const mimeMatch = arr[0].match(/:(.*?);/);
+        const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr], { type: mime });
     }
 });
 
